@@ -2,22 +2,15 @@
 'use client';
 
 import type { Message, QuickReply } from '@/lib/types';
-import { getBotResponse } from '@/app/actions';
+// import { getBotResponse } from '@/app/actions'; // Handled by parent
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import MessageBubble from './message-bubble';
 import QuickReplyButton from './quick-reply-button';
-import { Send, Loader2, BotMessageSquare } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import React, { useState, useRef, useEffect, FormEvent } from 'react';
 
-const initialBotMessage: Message = {
-  id: crypto.randomUUID(),
-  text: "Hi! I'm DiaChat. I'm here to help you with questions about diabetes. How can I assist you today?",
-  sender: 'bot',
-  timestamp: new Date(),
-  avatar: true,
-};
 
 const quickRepliesOptions: QuickReply[] = [
   { text: "Symptoms", context: 'symptoms' },
@@ -25,69 +18,56 @@ const quickRepliesOptions: QuickReply[] = [
   { text: "Medication Info", context: 'general_info' },
 ];
 
-export default function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([initialBotMessage]);
+interface ChatInterfaceProps {
+  messages: Message[];
+  onSendMessageSubmit: (userInput: string, context: QuickReply['context']) => Promise<void>;
+  isLoading: boolean;
+  // key prop is used by parent to trigger re-mount/reset on session change
+}
+
+export default function ChatInterface({ messages, onSendMessageSubmit, isLoading }: ChatInterfaceProps) {
+  const [currentMessages, setCurrentMessages] = useState<Message[]>(messages);
   const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+  // const scrollAreaRef = useRef<HTMLDivElement | null>(null); // Access viewport via ref if needed
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(scrollToBottom, [messages]);
+  useEffect(() => {
+    setCurrentMessages(messages);
+  }, [messages]);
 
-  const handleSendMessage = async (text: string, context: QuickReply['context']) => {
+  useEffect(() => {
+    scrollToBottom();
+  }, [currentMessages]);
+
+
+  const handleSubmitLocal = async (text: string, context: QuickReply['context']) => {
     if (!text.trim()) return;
+    
+    setInputValue(''); // Clear input immediately
 
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      text,
-      sender: 'user',
-      timestamp: new Date(),
-    };
-    setMessages((prevMessages) => [...prevMessages, userMessage]);
-    setInputValue('');
-    setIsLoading(true);
-
-    try {
-      const botResponseText = await getBotResponse(text, context);
-      const botMessage: Message = {
-        id: crypto.randomUUID(),
-        text: botResponseText,
-        sender: 'bot',
-        timestamp: new Date(),
-      };
-      setMessages((prevMessages) => [...prevMessages, botMessage]);
-    } catch (error) {
-      const errorMessage: Message = {
-        id: crypto.randomUUID(),
-        text: "Sorry, I couldn't connect to the server. Please try again later.",
-        sender: 'bot',
-        timestamp: new Date(),
-      };
-      setMessages((prevMessages) => [...prevMessages, errorMessage]);
-      console.error('Failed to send message:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    // Parent (HomePage) will handle adding user message, calling API, and updating the messages list.
+    // ChatInterface doesn't need to manage isLoading state itself directly for API calls, it's a prop.
+    await onSendMessageSubmit(text, context);
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmitForm = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    handleSendMessage(inputValue, 'general_info');
+    handleSubmitLocal(inputValue, 'general_info');
   };
 
   const handleQuickReplyClick = (reply: QuickReply) => {
-    handleSendMessage(reply.text, reply.context);
+    handleSubmitLocal(reply.text, reply.context);
   };
 
   return (
-    <div className="flex flex-col flex-1 bg-background overflow-hidden">
-      <ScrollArea className="flex-1 p-4 sm:p-6" ref={scrollAreaRef}>
+    <div className="flex flex-col flex-1 bg-background overflow-hidden h-full">
+      <ScrollArea className="flex-1 p-4 sm:p-6">
         <div className="space-y-4">
-          {messages.map((msg) => (
+          {currentMessages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} />
           ))}
           <div ref={messagesEndRef} />
@@ -104,7 +84,7 @@ export default function ChatInterface() {
             />
           ))}
         </div>
-        <form onSubmit={handleSubmit} className="flex items-center space-x-2">
+        <form onSubmit={handleSubmitForm} className="flex items-center space-x-2">
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}

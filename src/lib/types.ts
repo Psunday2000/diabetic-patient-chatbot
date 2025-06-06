@@ -10,3 +10,11 @@ export type QuickReply = {
   text: string;
   context: 'symptoms' | 'general_info';
 };
+
+export type ChatSession = {
+  id: string;
+  name: string;
+  messages: Message[];
+  startTime: Date;
+  lastActivity: Date;
+};
