@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Message, QuickReply } from '@/lib/types';
@@ -83,7 +84,7 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col flex-1 h-[calc(100vh-var(--header-height,4rem))] max-h-[calc(100vh-var(--header-height,4rem))] bg-background"> {/* Adjust header height if different */}
+    <div className="flex flex-col flex-1 bg-background overflow-hidden">
       <ScrollArea className="flex-1 p-4 sm:p-6" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.map((msg) => (
