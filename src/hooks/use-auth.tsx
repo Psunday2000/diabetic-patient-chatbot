@@ -14,7 +14,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+function useFirebaseAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
@@ -24,22 +24,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
-      
+
       const isAuthPage = pathname === '/login' || pathname === '/signup';
       const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
 
-      if (currentUser && isAuthPage) {
-        router.replace('/chat');
-      } else if (!currentUser && isAppPage) {
-        router.replace('/login');
+      if (currentUser) {
+        if (isAuthPage) {
+          router.replace('/chat');
+        }
+      } else {
+        if (isAppPage) {
+          router.replace('/login');
+        }
       }
     });
 
     return () => unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array ensures this runs only once.
+  }, [pathname, router]); // Dependency on pathname and router to react to route changes
+
+  return { user, loading };
+}
 
 
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useFirebaseAuth();
+  const pathname = usePathname();
+  
   if (loading) {
     return (
       <div className="flex flex-1 h-screen items-center justify-center bg-white">
@@ -47,14 +58,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
 
   // Prevent rendering auth pages if user is logged in, and vice-versa
-  // This logic is now safe because the redirect in useEffect will have already been queued
-  if (user && isAuthPage) return null; 
-  if (!user && isAppPage) return null; 
+  // This flicker-prevention logic is now safe because the redirect in useEffect will handle navigation
+  if (!loading) {
+    if (user && isAuthPage) return null;
+    if (!user && isAppPage) return null;
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
@@ -64,5 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
+
