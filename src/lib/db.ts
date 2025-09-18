@@ -9,7 +9,6 @@ const dbExists = fs.existsSync(dbPath);
 const db = new Database(dbPath);
 
 if (!dbExists) {
-  console.log('Creating database schema...');
   db.exec(`
     CREATE TABLE users (
       id TEXT PRIMARY KEY,
@@ -40,7 +39,6 @@ if (!dbExists) {
       FOREIGN KEY (sessionId) REFERENCES chat_sessions(id) ON DELETE CASCADE
     );
   `);
-  console.log('Database schema created.');
 }
 
 export default db;
