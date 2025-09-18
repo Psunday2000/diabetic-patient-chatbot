@@ -5,6 +5,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
   user: User | null;
@@ -30,23 +31,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // This effect handles redirection after auth state is determined.
-    if (!loading) {
-      const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
-      if (user && isAuthPage) {
-        router.replace('/chat');
-      }
-      if (!user && !isAuthPage) {
-        router.replace('/login');
-      }
+    if (loading) return;
+
+    const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
+    
+    if (user && isAuthPage) {
+      router.replace('/chat');
+    }
+    
+    if (!user && !isAuthPage) {
+      router.replace('/login');
     }
   }, [user, loading, pathname, router]);
 
-  // Don't render a global loader, let pages handle their own loading state
-  // This prevents the infinite spinner issue.
   if (loading) {
-    // You can return a minimal loading state or null
-    return null;
+    return (
+      <div className="flex flex-1 h-screen items-center justify-center bg-white">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
   }
+  
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
+  if (user && isAuthPage) return null;
+  if (!user && !isAuthPage) return null;
 
   return (
     <AuthContext.Provider value={{ user, loading }}>

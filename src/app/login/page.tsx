@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -44,6 +43,8 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: "Welcome back!",
       });
+      // The useAuth hook will handle the redirection automatically
+      // This prevents a race condition.
       router.push('/chat');
 
     } catch (error: any) {
@@ -52,6 +53,7 @@ export default function LoginPage() {
         description: error.message,
         variant: 'destructive',
       });
+    } finally {
       setIsLoading(false);
     }
   };
