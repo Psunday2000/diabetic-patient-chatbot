@@ -30,22 +30,24 @@ export default function AppHeader() {
   }
 
   return (
-    <header className="bg-white text-foreground p-4 shadow-sm sticky top-0 z-50 flex items-center justify-between border-b">
+    <header className="bg-white text-foreground p-4 shadow-sm sticky top-0 z-50 flex items-center justify-between border-b h-16">
       <div className="flex items-center space-x-3">
         {isMobile && (
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-foreground hover:bg-background/80 md:hidden">
+          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-foreground hover:bg-background/80">
             <PanelLeft className="h-6 w-6" />
             <span className="sr-only">Toggle History</span>
           </Button>
         )}
-        <MessageCircle className="h-8 w-8 text-primary" />
-        <h1 className="text-2xl font-bold">MediChat</h1>
+         <Link href="/chat" className="flex items-center space-x-3">
+            <MessageCircle className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold hidden sm:block">MediChat</h1>
+        </Link>
       </div>
       <div className="flex items-center">
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <div className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
                   <User className="h-5 w-5 text-secondary-foreground" />
                 </div>
