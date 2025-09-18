@@ -3,9 +3,9 @@
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import React from 'react';
-import { usePathname } from 'next/navigation';
 import { AuthProvider } from '@/hooks/use-auth';
 import AppLayout from '@/components/layout/app-layout';
+import { usePathname } from 'next/navigation';
 
 export default function RootLayout({
   children,
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
+  const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
 
   return (
     <html lang="en">
@@ -26,13 +26,13 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
         <AuthProvider>
-          {isAuthPage ? (
-            <>{children}</>
-          ) : (
-            <AppLayout>
-              {children}
-            </AppLayout>
-          )}
+            {isAppPage ? (
+              <AppLayout>
+                {children}
+              </AppLayout>
+            ) : (
+              <>{children}</>
+            )}
           <Toaster />
         </AuthProvider>
       </body>
