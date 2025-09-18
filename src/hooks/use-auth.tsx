@@ -62,11 +62,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
 
-  // Prevent rendering auth pages if user is logged in, and vice-versa
   // This flicker-prevention logic is now safe because the redirect in useEffect will handle navigation
   if (!loading) {
-    if (user && isAuthPage) return null;
-    if (!user && isAppPage) return null;
+    if (user && isAuthPage) {
+        return (
+            <div className="flex flex-1 h-screen items-center justify-center bg-white">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+        );
+    }
+    if (!user && isAppPage) {
+         return (
+            <div className="flex flex-1 h-screen items-center justify-center bg-white">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+        );
+    }
   }
 
   return (
@@ -83,4 +94,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
