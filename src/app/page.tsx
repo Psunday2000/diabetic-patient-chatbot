@@ -6,7 +6,15 @@ import type { Message, QuickReply, ChatSession } from '@/lib/types';
 import { getBotResponse } from '@/app/actions';
 import ChatInterface from '@/components/chat/chat-interface';
 import ChatHistorySidebar from '@/components/chat/chat-history-sidebar';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 
 const initialBotMessageText = "Hi! I'm MediChat. I'm here to help you with your medical questions. How can I assist you today?";
 
@@ -192,7 +200,7 @@ export default function HomePage() {
         onLoadSession={handleLoadSession}
         onNewChat={handleNewChat}
       />
-      <main className="flex flex-col flex-1 h-full overflow-y-auto bg-white">
+      <main className="flex flex-col flex-1 h-full overflow-y-auto bg-white relative">
         {activeChatSessionId && activeMessages.length > 0 ? (
            <ChatInterface
             key={activeChatSessionId}
@@ -205,6 +213,23 @@ export default function HomePage() {
             <p>Select a chat session or start a new one.</p>
           </div>
         )}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleNewChat}
+                className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary shadow-lg hover:bg-accent"
+                size="icon"
+              >
+                <Plus className="h-7 w-7" />
+                <span className="sr-only">New Chat</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="bg-foreground text-background">
+              <p>New Chat</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </main>
     </>
   );

@@ -4,7 +4,7 @@ import type { ChatSession } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { PlusSquare, MessageSquareText } from 'lucide-react';
+import { MessageSquareText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -19,15 +19,11 @@ export default function ChatHistorySidebar({
   sessions,
   activeSessionId,
   onLoadSession,
-  onNewChat,
 }: ChatHistorySidebarProps) {
   return (
     <Sidebar side="left" className="border-r bg-sidebar text-sidebar-foreground" collapsible="icon">
       <SidebarHeader className="p-3">
-        <Button variant="outline" className="w-full justify-start text-base font-bold" onClick={onNewChat}>
-          <PlusSquare className="mr-3 h-5 w-5" />
-          New Chat
-        </Button>
+         <h2 className="text-lg font-semibold text-sidebar-primary-foreground px-2">Chat History</h2>
       </SidebarHeader>
       <SidebarContent className="p-0">
         <ScrollArea className="h-full">
