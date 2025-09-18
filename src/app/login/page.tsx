@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -32,9 +33,11 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // 1. Sign in with Firebase Auth (Client-side)
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const token = await userCredential.user.getIdToken();
       
+      // 2. Get the token and set the session cookie via a Server Action
+      const token = await userCredential.user.getIdToken();
       await setSessionCookie(token);
 
       toast({

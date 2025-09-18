@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -33,15 +34,15 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // 1. Create user in Firebase Auth
+      // 1. Create user in Firebase Auth (Client-side)
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 2. Update Firebase profile with name
+      // 2. Update Firebase profile with name (Client-side)
       await updateProfile(user, { displayName: name });
       
       // 3. Store user in our own database via a Server Action
-      await storeUserInDb(user.uid, name, email);
+      await storeUserInDb(user.uid, name, user.email!);
       
       // 4. Get the auth token and set the session cookie via a Server Action
       const token = await user.getIdToken();

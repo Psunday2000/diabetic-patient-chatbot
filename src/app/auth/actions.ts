@@ -1,9 +1,6 @@
+
 'use server';
 
-import { auth } from '@/lib/firebase';
-import {
-  updateProfile,
-} from 'firebase/auth';
 import { cookies } from 'next/headers';
 import db from '@/lib/db';
 import { revalidatePath } from 'next/cache';
@@ -22,9 +19,8 @@ export async function storeUserInDb(id: string, name: string, email: string) {
 }
 
 export async function setSessionCookie(token: string) {
-    cookies().set('session', token, { httpOnly: true, secure: true, sameSite: 'strict' });
+    cookies().set('session', token, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 60 * 60 * 24 * 7 });
 }
-
 
 export async function signOut() {
   // This server action is primarily for clearing the cookie
@@ -41,15 +37,8 @@ export async function getCurrentUser() {
     }
     
     // In a real app, you would verify the token with Firebase Admin SDK on the server
-    // For this prototype, we'll assume the client-side token is valid enough for UI purposes
-    // and rely on middleware for route protection.
-    // A proper implementation would look something like:
-    // import { getAuth } from 'firebase-admin/auth';
-    // const decodedToken = await getAuth().verifyIdToken(sessionCookie.value);
-    // return decodedToken;
-    // For now, we return a placeholder. This part needs a proper backend implementation.
-    
-    // This is a simplified "decoding" for demo purposes only. DO NOT USE IN PRODUCTION.
+    // For this prototype, we will decode the token to get user info.
+    // This is not a secure verification.
     try {
         const payload = JSON.parse(Buffer.from(sessionCookie.value.split('.')[1], 'base64').toString());
         return {
