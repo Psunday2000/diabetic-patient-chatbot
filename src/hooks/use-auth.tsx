@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, router]);
+  }, []); // Empty dependency array ensures this runs only once.
 
 
   if (loading) {
@@ -48,10 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // Prevent rendering auth pages if user is logged in, and vice-versa
   const isAuthPage = pathname === '/login' || pathname === '/signup';
-  if (user && isAuthPage) return null; // Wait for redirect
-  if (!user && !isAuthPage && pathname !== '/') return null; // Wait for redirect to /login
+  const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
+
+  // Prevent rendering auth pages if user is logged in, and vice-versa
+  // This logic is now safe because the redirect in useEffect will have already been queued
+  if (user && isAuthPage) return null; 
+  if (!user && isAppPage) return null; 
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
