@@ -6,7 +6,7 @@ import fs from 'fs';
 const dbPath = path.join(process.cwd(), 'local.db');
 const dbExists = fs.existsSync(dbPath);
 
-const db = new Database(dbPath, { verbose: console.log });
+const db = new Database(dbPath);
 
 if (!dbExists) {
   console.log('Creating database schema...');

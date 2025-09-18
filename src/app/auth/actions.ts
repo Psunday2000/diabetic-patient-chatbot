@@ -1,3 +1,4 @@
+
 'use server';
 
 import { auth } from '@/lib/firebase';
@@ -61,7 +62,8 @@ export async function signIn(email: string, password: string):Promise<{error?: s
 }
 
 export async function signOut() {
-  await auth.signOut();
+  // Signing out on the client is managed by the AuthProvider
+  // This server action is primarily for clearing the cookie
   cookies().delete('session');
   revalidatePath('/');
 }

@@ -1,3 +1,4 @@
+
 import { NextResponse, type NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
@@ -15,7 +16,7 @@ export function middleware(request: NextRequest) {
   }
 
   // If there is a session and user tries to access auth pages, redirect to chat
-  if (['/login', '/signup'].includes(pathname)) {
+  if (['/', '/login', '/signup'].includes(pathname)) {
     if (sessionCookie) {
       const url = request.nextUrl.clone();
       url.pathname = '/chat';

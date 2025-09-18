@@ -1,3 +1,4 @@
+
 'use client';
 
 import { LogOut, MessageCircle, PanelLeft, User } from 'lucide-react';
@@ -13,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from '@/hooks/use-auth';
+import { auth } from '@/lib/firebase';
 import { signOut } from '@/app/auth/actions';
 import { useRouter } from 'next/navigation';
 
@@ -22,7 +24,8 @@ export default function AppHeader() {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut();
+    await auth.signOut();
+    await signOut(); // This clears the server-side cookie
     router.push('/');
   }
 
