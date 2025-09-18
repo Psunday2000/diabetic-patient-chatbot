@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signUp } from '@/app/auth/actions';
+import { storeUserInDb, setSessionCookie } from '@/app/auth/actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -17,6 +17,8 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { MessageCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -29,21 +31,36 @@ export default function SignupPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const { error } = await signUp(name, email, password);
 
-    if (error) {
-      toast({
-        title: 'Sign Up Failed',
-        description: error,
-        variant: 'destructive',
-      });
-      setIsLoading(false);
-    } else {
+    try {
+      // 1. Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. Update Firebase profile with name
+      await updateProfile(user, { displayName: name });
+      
+      // 3. Store user in our own database via a Server Action
+      await storeUserInDb(user.uid, name, email);
+      
+      // 4. Get the auth token and set the session cookie via a Server Action
+      const token = await user.getIdToken();
+      await setSessionCookie(token);
+
       toast({
         title: 'Account Created',
         description: "Welcome to MediChat!",
       });
+
       router.push('/chat');
+
+    } catch (error: any) {
+       toast({
+        title: 'Sign Up Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setIsLoading(false);
     }
   };
 

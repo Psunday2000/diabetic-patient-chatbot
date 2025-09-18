@@ -1,68 +1,32 @@
-
 'use server';
 
 import { auth } from '@/lib/firebase';
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth';
 import { cookies } from 'next/headers';
 import db from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 
-async function storeUserInDb(id: string, name: string, email: string) {
-  const stmt = db.prepare('INSERT INTO users (id, name, email) VALUES (?, ?, ?)');
+export async function storeUserInDb(id: string, name: string, email: string) {
+  const stmt = db.prepare('INSERT OR IGNORE INTO users (id, name, email) VALUES (?, ?, ?)');
   try {
     stmt.run(id, name, email);
   } catch (error: any) {
-    if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-      console.log(`User with email ${email} already exists.`);
-      return;
+    // It's fine if the user already exists, we can ignore the error.
+    if (!error.code?.includes('SQLITE_CONSTRAINT')) {
+        console.error("Failed to store user in DB:", error);
+        throw error;
     }
-    throw error;
   }
 }
 
-export async function signUp(name: string, email: string, password: string):Promise<{error?: string}> {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    const user = userCredential.user;
-    await updateProfile(user, { displayName: name });
-    await storeUserInDb(user.uid, name, email);
-    
-    const token = await user.getIdToken();
+export async function setSessionCookie(token: string) {
     cookies().set('session', token, { httpOnly: true, secure: true, sameSite: 'strict' });
-
-    revalidatePath('/');
-    return {};
-  } catch (error: any) {
-    return { error: error.message };
-  }
 }
 
-export async function signIn(email: string, password: string):Promise<{error?: string}> {
-  try {
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    const token = await userCredential.user.getIdToken();
-    cookies().set('session', token, { httpOnly: true, secure: true, sameSite: 'strict' });
-    revalidatePath('/');
-    return {};
-  } catch (error: any) {
-    return { error: error.message };
-  }
-}
 
 export async function signOut() {
-  // Signing out on the client is managed by the AuthProvider
   // This server action is primarily for clearing the cookie
   cookies().delete('session');
   revalidatePath('/');

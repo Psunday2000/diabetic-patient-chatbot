@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from '@/app/auth/actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -17,6 +16,9 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { MessageCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { setSessionCookie } from '../auth/actions';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,21 +30,26 @@ export default function LoginPage() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const { error } = await signIn(email, password);
 
-    if (error) {
-      toast({
-        title: 'Login Failed',
-        description: error,
-        variant: 'destructive',
-      });
-      setIsLoading(false);
-    } else {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
+      
+      await setSessionCookie(token);
+
       toast({
         title: 'Login Successful',
         description: "Welcome back!",
       });
       router.push('/chat');
+
+    } catch (error: any) {
+      toast({
+        title: 'Login Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setIsLoading(false);
     }
   };
 
