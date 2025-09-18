@@ -29,19 +29,22 @@ function useFirebaseAuth() {
       const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
 
       if (currentUser) {
+        // If user is logged in and on an auth page, redirect to chat
         if (isAuthPage) {
           router.replace('/chat');
         }
       } else {
+        // If user is not logged in and on a protected app page, redirect to login
         if (isAppPage) {
           router.replace('/login');
         }
       }
     });
 
+    // Cleanup subscription on unmount
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, router]); // Dependency on pathname and router to react to route changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   return { user, loading };
 }
@@ -50,6 +53,8 @@ function useFirebaseAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { user, loading } = useFirebaseAuth();
   const pathname = usePathname();
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
   
   if (loading) {
     return (
@@ -59,25 +64,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
-  const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
+  // While loading is false, we might still be redirecting.
+  // This prevents a flicker of the old page before the redirect happens.
+  if (!user && isAppPage) {
+      return (
+          <div className="flex flex-1 h-screen items-center justify-center bg-white">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
+      );
+  }
 
-  // This flicker-prevention logic is now safe because the redirect in useEffect will handle navigation
-  if (!loading) {
-    if (user && isAuthPage) {
-        return (
-            <div className="flex flex-1 h-screen items-center justify-center bg-white">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            </div>
-        );
-    }
-    if (!user && isAppPage) {
-         return (
-            <div className="flex flex-1 h-screen items-center justify-center bg-white">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            </div>
-        );
-    }
+  if (user && isAuthPage) {
+      return (
+          <div className="flex flex-1 h-screen items-center justify-center bg-white">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
+      );
   }
 
   return (
@@ -94,3 +96,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
