@@ -30,24 +30,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // This effect handles redirection after auth state is determined.
     if (loading) return;
 
-    const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
-    
+    const isAuthPage = pathname === '/login' || pathname === '/signup';
+    const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
+
     if (user && isAuthPage) {
       router.replace('/chat');
-    }
-    
-    if (!user && !isAuthPage) {
+    } else if (!user && isAppPage) {
       router.replace('/login');
     }
   }, [user, loading, pathname, router]);
 
-  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
 
-  // While loading, or if we are about to redirect, show a loader.
-  if (loading || (user && isAuthPage) || (!user && !isAuthPage)) {
+  if (loading) {
     return (
       <div className="flex flex-1 h-screen items-center justify-center bg-white">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

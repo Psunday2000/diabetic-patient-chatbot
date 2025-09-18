@@ -3,7 +3,6 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('session');
-
   const { pathname } = request.nextUrl;
 
   // If trying to access protected routes without a session, redirect to login
@@ -15,8 +14,8 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // If there is a session and user tries to access auth pages, redirect to chat
-  if (['/', '/login', '/signup'].includes(pathname)) {
+  // If there is a session and user tries to access the root page, redirect to chat
+  if (pathname === '/') {
     if (sessionCookie) {
       const url = request.nextUrl.clone();
       url.pathname = '/chat';
