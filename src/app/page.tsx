@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Message, QuickReply, ChatSession } from '@/lib/types';
-import { getBotResponse } from '@/app/actions';
+import { getBotResponse, getChatSessions, createNewChatSession, addMessageToSession, updateSessionName } from '@/app/actions';
 import ChatInterface from '@/components/chat/chat-interface';
 import ChatHistorySidebar from '@/components/chat/chat-history-sidebar';
 import { Loader2, Plus } from 'lucide-react';
@@ -35,77 +35,66 @@ export default function HomePage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
 
-  const createNewSession = useCallback((): ChatSession => {
+  const createNewSession = useCallback(async () => {
     const newSessionId = crypto.randomUUID();
     const now = new Date();
-    const initialMessages = [
-      {
-        id: crypto.randomUUID(),
-        text: initialBotMessageText,
-        sender: 'bot',
-        timestamp: now,
-        avatar: true,
-      },
-    ];
-    return {
+    const initialMessage: Message = {
+      id: crypto.randomUUID(),
+      text: initialBotMessageText,
+      sender: 'bot',
+      timestamp: now,
+      avatar: true,
+    };
+    const newSession: ChatSession = {
       id: newSessionId,
       name: `New Chat ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-      messages: initialMessages,
+      messages: [initialMessage],
       startTime: now,
       lastActivity: now,
     };
+    
+    await createNewChatSession(newSession);
+    const sessions = await getChatSessions();
+    setChatSessions(sessions);
+    setActiveChatSessionId(newSession.id);
   }, []);
 
-  const handleNewChat = useCallback(() => {
-    const newSession = createNewSession();
-    setChatSessions(prevSessions => [newSession, ...prevSessions]);
-    setActiveChatSessionId(newSession.id);
+  const handleNewChat = useCallback(async () => {
+    await createNewSession();
   }, [createNewSession]);
 
   useEffect(() => {
-    setIsInitialLoading(true);
-    try {
-      const storedSessions = localStorage.getItem('chatSessions');
-      if (storedSessions) {
-        const parsedSessions: ChatSession[] = JSON.parse(storedSessions).map((s: any) => ({
-          ...s,
-          startTime: new Date(s.startTime),
-          lastActivity: new Date(s.lastActivity),
-          messages: s.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })),
-        }));
-
-        if (parsedSessions.length > 0) {
-          const sortedSessions = [...parsedSessions].sort((a,b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
-          setChatSessions(sortedSessions);
+    async function loadInitialData() {
+      setIsInitialLoading(true);
+      try {
+        const sessions = await getChatSessions();
+        if (sessions.length > 0) {
+          setChatSessions(sessions);
           const lastActiveId = localStorage.getItem('activeChatSessionId');
-          if (lastActiveId && sortedSessions.find(s => s.id === lastActiveId)) {
+          if (lastActiveId && sessions.find(s => s.id === lastActiveId)) {
             setActiveChatSessionId(lastActiveId);
           } else {
-             setActiveChatSessionId(sortedSessions[0].id);
+            setActiveChatSessionId(sessions[0].id);
           }
         } else {
-          handleNewChat();
+          await createNewSession();
         }
-      } else {
-        handleNewChat();
+      } catch (error) {
+        console.error("Error loading sessions:", error);
+        await createNewSession();
+      } finally {
+        setIsInitialLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading from localStorage:", error);
-      handleNewChat();
-    } finally {
-      setIsInitialLoading(false);
     }
-  }, [handleNewChat]);
+    loadInitialData();
+  }, [createNewSession]);
 
 
   useEffect(() => {
-    if (!isInitialLoading && chatSessions.length > 0) {
-      localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
-    }
-    if (!isInitialLoading && activeChatSessionId) {
+    if (activeChatSessionId) {
       localStorage.setItem('activeChatSessionId', activeChatSessionId);
     }
-  }, [chatSessions, activeChatSessionId, isInitialLoading]);
+  }, [activeChatSessionId]);
 
 
   const handleLoadSession = (sessionId: string) => {
@@ -113,16 +102,15 @@ export default function HomePage() {
   };
 
   const handleSendMessage = async (userInput: string, context: QuickReply['context']) => {
-    let currentSessionId = activeChatSessionId;
-    let sessionToUpdate = chatSessions.find(s => s.id === currentSessionId);
-
+    if (!activeChatSessionId) {
+      console.error("No active chat session.");
+      return;
+    }
+    
+    let sessionToUpdate = chatSessions.find(s => s.id === activeChatSessionId);
     if (!sessionToUpdate) {
-      console.warn("No active session found, creating a new one implicitly.");
-      const newSession = createNewSession();
-      sessionToUpdate = newSession;
-      currentSessionId = newSession.id;
-      setChatSessions(prev => [newSession, ...prev]);
-      setActiveChatSessionId(newSession.id);
+        console.error("Active session not found in state.");
+        return;
     }
 
     const userMessage: Message = {
@@ -132,20 +120,28 @@ export default function HomePage() {
       timestamp: new Date(),
     };
 
+    // Optimistically update UI
     const isFirstMeaningfulMessage = sessionToUpdate.messages.filter(m => m.sender === 'user').length === 0;
-    const updatedName = isFirstMeaningfulMessage && userInput.trim() ? generateSessionName([userMessage]) : sessionToUpdate.name;
-
-    const updatedSessions = chatSessions.map(s =>
-      s.id === currentSessionId
-        ? { ...s, messages: [...s.messages, userMessage], lastActivity: new Date(), name: updatedName }
-        : s
-    ).sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+    const newName = isFirstMeaningfulMessage ? generateSessionName([userMessage]) : sessionToUpdate.name;
     
-    setChatSessions(updatedSessions);
+    const updatedMessages = [...sessionToUpdate.messages, userMessage];
+    const updatedSession = { ...sessionToUpdate, messages: updatedMessages, lastActivity: new Date(), name: newName };
+
+    setChatSessions(prevSessions => 
+        prevSessions.map(s => s.id === activeChatSessionId ? updatedSession : s)
+                    .sort((a,b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
+    );
     setIsLoading(true);
 
+    // Persist user message and update session name if needed
+    await addMessageToSession(activeChatSessionId, userMessage);
+    if (isFirstMeaningfulMessage) {
+        await updateSessionName(activeChatSessionId, newName);
+    }
+
+
     try {
-      const botResponseText = await getBotResponse(userInput, context);
+      const botResponseText = await getBotResponse(userInput, context, activeChatSessionId);
       const botMessage: Message = {
         id: crypto.randomUUID(),
         text: botResponseText,
@@ -153,14 +149,16 @@ export default function HomePage() {
         timestamp: new Date(),
         avatar: true,
       };
-      setChatSessions(prevSessions =>
-        prevSessions.map(s =>
-          s.id === currentSessionId
-            ? { ...s, messages: [...s.messages, botMessage], lastActivity: new Date() }
-            : s
-        )
-      );
+
+      // Persist bot message
+      await addMessageToSession(activeChatSessionId, botMessage);
+      
+      // Update UI with final state from server
+      const sessions = await getChatSessions();
+      setChatSessions(sessions);
+
     } catch (error) {
+      console.error('Failed to send message:', error);
       const errorMessageText = "Sorry, I couldn't connect to the server. Please try again later.";
       const errorBotMessage: Message = {
         id: crypto.randomUUID(),
@@ -169,14 +167,9 @@ export default function HomePage() {
         timestamp: new Date(),
         avatar: true,
       };
-      setChatSessions(prevSessions =>
-        prevSessions.map(s =>
-          s.id === currentSessionId
-            ? { ...s, messages: [...s.messages, errorBotMessage], lastActivity: new Date() }
-            : s
-        )
-      );
-      console.error('Failed to send message:', error);
+      await addMessageToSession(activeChatSessionId, errorBotMessage);
+      const sessions = await getChatSessions();
+      setChatSessions(sessions);
     } finally {
       setIsLoading(false);
     }
@@ -210,7 +203,7 @@ export default function HomePage() {
           />
         ) : (
           <div className="flex flex-1 items-center justify-center text-muted-foreground p-4">
-            <p>Select a chat session or start a new one.</p>
+             { !isInitialLoading && <p>Select a chat session or start a new one.</p> }
           </div>
         )}
         <TooltipProvider>

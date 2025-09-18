@@ -1,4 +1,6 @@
 
+'use client';
+
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,8 +13,19 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function ProfilePage() {
+  const { toast } = useToast();
+
+  const handleUpdateProfile = () => {
+    toast({
+      title: "Profile Updated",
+      description: "Your profile information has been successfully updated.",
+    });
+  };
+
   return (
     <div className="flex-1 w-full bg-gray-100 dark:bg-gray-900">
       <div className="w-full">
@@ -20,8 +33,8 @@ export default function ProfilePage() {
           <Image
             src="https://picsum.photos/seed/profile-cover/1600/400"
             alt="Profile cover"
-            layout="fill"
-            objectFit="cover"
+            fill={true}
+            style={{objectFit: 'cover'}}
             className="rounded-t-lg"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -44,8 +57,8 @@ export default function ProfilePage() {
                   <Image
                     src="https://picsum.photos/seed/avatar/200"
                     alt="User avatar"
-                    layout="fill"
-                    objectFit="cover"
+                    fill={true}
+                    style={{objectFit: 'cover'}}
                     className="rounded-full border-4 border-white dark:border-gray-800 shadow-md"
                   />
                 </div>
@@ -66,7 +79,7 @@ export default function ProfilePage() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>My Account</CardTitle>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => toast({ title: "Settings Clicked", description: "This could open a settings modal."})}>
                     Settings
                   </Button>
                 </div>
@@ -139,7 +152,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                  <div className="flex justify-end">
-                    <Button>Update Profile</Button>
+                    <Button onClick={handleUpdateProfile}>Update Profile</Button>
                 </div>
               </CardContent>
             </Card>
