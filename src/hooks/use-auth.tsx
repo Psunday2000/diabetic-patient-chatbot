@@ -21,26 +21,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
       setLoading(false);
+      
+      const isAuthPage = pathname === '/login' || pathname === '/signup';
+      const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
+
+      if (currentUser && isAuthPage) {
+        router.replace('/chat');
+      } else if (!currentUser && isAppPage) {
+        router.replace('/login');
+      }
     });
 
     return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (loading) return;
-
-    const isAuthPage = pathname === '/login' || pathname === '/signup';
-    const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
-
-    if (user && isAuthPage) {
-      router.replace('/chat');
-    } else if (!user && isAppPage) {
-      router.replace('/login');
-    }
-  }, [user, loading, pathname, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, router]);
 
 
   if (loading) {
@@ -50,6 +47,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+  
+  // Prevent rendering auth pages if user is logged in, and vice-versa
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  if (user && isAuthPage) return null; // Wait for redirect
+  if (!user && !isAuthPage && pathname !== '/') return null; // Wait for redirect to /login
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
