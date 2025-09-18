@@ -23,14 +23,13 @@ export default function RootLayout({
         <meta name="description" content="AI-powered chatbot to help you manage diabetes." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased bg-background text-foreground">
-        <SidebarProvider defaultOpen={false}>
-          <div className="flex flex-col min-h-screen">
+      <body className="font-sans antialiased bg-background text-foreground">
+        <SidebarProvider defaultOpen={true}>
+          <div className="flex flex-col h-screen">
             <AppHeader />
             <main className="flex-1 flex flex-row overflow-hidden">
-              {/* Content from page.tsx will include Sidebar and SidebarInset */}
               {children}
             </main>
           </div>

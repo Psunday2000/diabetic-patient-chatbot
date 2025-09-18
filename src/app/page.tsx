@@ -5,7 +5,6 @@ import type { Message, QuickReply, ChatSession } from '@/lib/types';
 import { getBotResponse } from '@/app/actions';
 import ChatInterface from '@/components/chat/chat-interface';
 import ChatHistorySidebar from '@/components/chat/chat-history-sidebar';
-import { SidebarInset } from '@/components/ui/sidebar';
 import { Loader2 } from 'lucide-react';
 
 const initialBotMessageText = "Hi! I'm DiaChat. I'm here to help you with questions about diabetes. How can I assist you today?";
@@ -16,7 +15,6 @@ function generateSessionName(messages: Message[]): string {
     const name = firstUserMessage.text.trim();
     return name.substring(0, 30) + (name.length > 30 ? '...' : '');
   }
-  // Fallback if no user message or empty, though typically a session is named after first user input.
   return `Chat ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
@@ -42,7 +40,7 @@ export default function HomePage() {
     ];
     return {
       id: newSessionId,
-      name: generateSessionName(initialMessages) || `New Chat ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+      name: `New Chat ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
       messages: initialMessages,
       startTime: now,
       lastActivity: now,
@@ -51,11 +49,10 @@ export default function HomePage() {
 
   const handleNewChat = useCallback(() => {
     const newSession = createNewSession();
-    setChatSessions(prevSessions => [newSession, ...prevSessions]); // Add to beginning for chronological order in UI (if sorted by time later)
+    setChatSessions(prevSessions => [newSession, ...prevSessions]);
     setActiveChatSessionId(newSession.id);
   }, [createNewSession]);
 
-  // Load from localStorage
   useEffect(() => {
     setIsInitialLoading(true);
     try {
@@ -69,32 +66,29 @@ export default function HomePage() {
         }));
 
         if (parsedSessions.length > 0) {
-          setChatSessions(parsedSessions);
+          const sortedSessions = [...parsedSessions].sort((a,b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+          setChatSessions(sortedSessions);
           const lastActiveId = localStorage.getItem('activeChatSessionId');
-          if (lastActiveId && parsedSessions.find(s => s.id === lastActiveId)) {
+          if (lastActiveId && sortedSessions.find(s => s.id === lastActiveId)) {
             setActiveChatSessionId(lastActiveId);
           } else {
-            // Sort by lastActivity and pick the most recent
-             const sortedSessions = [...parsedSessions].sort((a,b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
              setActiveChatSessionId(sortedSessions[0].id);
           }
         } else {
-          handleNewChat(); // Creates and sets a new chat if localStorage is empty
+          handleNewChat();
         }
       } else {
-        handleNewChat(); // Creates and sets a new chat if no sessions stored
+        handleNewChat();
       }
     } catch (error) {
       console.error("Error loading from localStorage:", error);
-      handleNewChat(); // Fallback to new chat on error
+      handleNewChat();
     } finally {
       setIsInitialLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // handleNewChat is memoized.
+  }, [handleNewChat]);
 
 
-  // Save to localStorage
   useEffect(() => {
     if (!isInitialLoading && chatSessions.length > 0) {
       localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
@@ -111,13 +105,9 @@ export default function HomePage() {
 
   const handleSendMessage = async (userInput: string, context: QuickReply['context']) => {
     let currentSessionId = activeChatSessionId;
-    let sessionToUpdate: ChatSession | undefined = chatSessions.find(s => s.id === currentSessionId);
+    let sessionToUpdate = chatSessions.find(s => s.id === currentSessionId);
 
     if (!sessionToUpdate) {
-      // This case should ideally be handled by ensuring activeChatSessionId is always valid
-      // or by creating a new one if it becomes invalid. For now, let's assume one is active.
-      // If not, we could call handleNewChat() here and then proceed.
-      // For robustness, let's ensure a session is created or found.
       console.warn("No active session found, creating a new one implicitly.");
       const newSession = createNewSession();
       sessionToUpdate = newSession;
@@ -126,7 +116,6 @@ export default function HomePage() {
       setActiveChatSessionId(newSession.id);
     }
 
-
     const userMessage: Message = {
       id: crypto.randomUUID(),
       text: userInput,
@@ -134,18 +123,16 @@ export default function HomePage() {
       timestamp: new Date(),
     };
 
-    const isFirstMeaningfulMessage = sessionToUpdate.messages.filter(m => m.sender === 'user').length === 0 && sessionToUpdate.messages.length <=1;
-    const updatedName = isFirstMeaningfulMessage ? generateSessionName([userMessage]) : sessionToUpdate.name;
+    const isFirstMeaningfulMessage = sessionToUpdate.messages.filter(m => m.sender === 'user').length === 0;
+    const updatedName = isFirstMeaningfulMessage && userInput.trim() ? generateSessionName([userMessage]) : sessionToUpdate.name;
 
-
-    // Update session with user message
-    setChatSessions(prevSessions =>
-      prevSessions.map(s =>
-        s.id === currentSessionId
-          ? { ...s, messages: [...s.messages, userMessage], lastActivity: new Date(), name: updatedName }
-          : s
-      )
-    );
+    const updatedSessions = chatSessions.map(s =>
+      s.id === currentSessionId
+        ? { ...s, messages: [...s.messages, userMessage], lastActivity: new Date(), name: updatedName }
+        : s
+    ).sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+    
+    setChatSessions(updatedSessions);
     setIsLoading(true);
 
     try {
@@ -190,7 +177,7 @@ export default function HomePage() {
 
   if (isInitialLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center h-full">
+      <div className="flex flex-1 items-center justify-center h-full bg-white">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
@@ -199,12 +186,12 @@ export default function HomePage() {
   return (
     <>
       <ChatHistorySidebar
-        sessions={[...chatSessions].sort((a,b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())}
+        sessions={chatSessions}
         activeSessionId={activeChatSessionId}
         onLoadSession={handleLoadSession}
         onNewChat={handleNewChat}
       />
-      <SidebarInset className="flex flex-col flex-1 h-full overflow-y-auto bg-background">
+      <div className="flex flex-col flex-1 h-full overflow-y-auto bg-white">
         {activeChatSessionId && activeMessages.length > 0 ? (
            <ChatInterface
             key={activeChatSessionId}
@@ -214,10 +201,10 @@ export default function HomePage() {
           />
         ) : (
           <div className="flex flex-1 items-center justify-center text-muted-foreground p-4">
-            <p>Select a chat session from the sidebar or start a new one.</p>
+            <p>Select a chat session or start a new one.</p>
           </div>
         )}
-      </SidebarInset>
+      </div>
     </>
   );
 }
