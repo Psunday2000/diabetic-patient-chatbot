@@ -1,8 +1,10 @@
+
 'use client';
 
 import { MessageCircle, PanelLeft, User } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,8 +49,8 @@ export default function AppHeader() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              Profile
+            <DropdownMenuItem asChild>
+              <Link href="/profile">Profile</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               Settings

@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -17,9 +18,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"DM Sans"', 'sans-serif'],
-        body: ['"DM Sans"', 'sans-serif'],
-        headline: ['"DM Sans"', 'sans-serif'],
+        sans: ['"Montserrat"', 'sans-serif'],
+        body: ['"Montserrat"', 'sans-serif'],
+        headline: ['"Montserrat"', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {

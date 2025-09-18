@@ -35,10 +35,10 @@ export default function HomePage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
 
-  const createNewSession = useCallback((prefilledMessages?: Message[]): ChatSession => {
+  const createNewSession = useCallback((): ChatSession => {
     const newSessionId = crypto.randomUUID();
     const now = new Date();
-    const initialMessages = prefilledMessages || [
+    const initialMessages = [
       {
         id: crypto.randomUUID(),
         text: initialBotMessageText,
