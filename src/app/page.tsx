@@ -1,229 +1,114 @@
-
 'use client';
-
-import React, { useState, useEffect, useCallback } from 'react';
-import type { Message, QuickReply, ChatSession } from '@/lib/types';
-import { getBotResponse, getChatSessions, createNewChatSession, addMessageToSession, updateSessionName } from '@/app/actions';
-import ChatInterface from '@/components/chat/chat-interface';
-import ChatHistorySidebar from '@/components/chat/chat-history-sidebar';
-import { Loader2, Plus } from 'lucide-react';
+import { Activity, MessageCircle, ShieldCheck, Zap } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 
-
-const initialBotMessageText = "Hi! I'm MediChat. I'm here to help you with your medical questions. How can I assist you today?";
-
-function generateSessionName(messages: Message[]): string {
-  const firstUserMessage = messages.find(m => m.sender === 'user');
-  if (firstUserMessage && firstUserMessage.text.trim()) {
-    const name = firstUserMessage.text.trim();
-    return name.substring(0, 30) + (name.length > 30 ? '...' : '');
-  }
-  return `Chat ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-}
-
-
-export default function HomePage() {
-  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
-  const [activeChatSessionId, setActiveChatSessionId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-
-
-  const createNewSession = useCallback(async () => {
-    const newSessionId = crypto.randomUUID();
-    const now = new Date();
-    const initialMessage: Message = {
-      id: crypto.randomUUID(),
-      text: initialBotMessageText,
-      sender: 'bot',
-      timestamp: now,
-      avatar: true,
-    };
-    const newSession: ChatSession = {
-      id: newSessionId,
-      name: `New Chat ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-      messages: [initialMessage],
-      startTime: now,
-      lastActivity: now,
-    };
-    
-    await createNewChatSession(newSession);
-    const sessions = await getChatSessions();
-    setChatSessions(sessions);
-    setActiveChatSessionId(newSession.id);
-  }, []);
-
-  const handleNewChat = useCallback(async () => {
-    await createNewSession();
-  }, [createNewSession]);
-
-  useEffect(() => {
-    async function loadInitialData() {
-      setIsInitialLoading(true);
-      try {
-        const sessions = await getChatSessions();
-        if (sessions.length > 0) {
-          setChatSessions(sessions);
-          const lastActiveId = localStorage.getItem('activeChatSessionId');
-          if (lastActiveId && sessions.find(s => s.id === lastActiveId)) {
-            setActiveChatSessionId(lastActiveId);
-          } else {
-            setActiveChatSessionId(sessions[0].id);
-          }
-        } else {
-          await createNewSession();
-        }
-      } catch (error) {
-        console.error("Error loading sessions:", error);
-        await createNewSession();
-      } finally {
-        setIsInitialLoading(false);
-      }
-    }
-    loadInitialData();
-  }, [createNewSession]);
-
-
-  useEffect(() => {
-    if (activeChatSessionId) {
-      localStorage.setItem('activeChatSessionId', activeChatSessionId);
-    }
-  }, [activeChatSessionId]);
-
-
-  const handleLoadSession = (sessionId: string) => {
-    setActiveChatSessionId(sessionId);
-  };
-
-  const handleSendMessage = async (userInput: string, context: QuickReply['context']) => {
-    if (!activeChatSessionId) {
-      console.error("No active chat session.");
-      return;
-    }
-    
-    let sessionToUpdate = chatSessions.find(s => s.id === activeChatSessionId);
-    if (!sessionToUpdate) {
-        console.error("Active session not found in state.");
-        return;
-    }
-
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      text: userInput,
-      sender: 'user',
-      timestamp: new Date(),
-    };
-
-    // Optimistically update UI
-    const isFirstMeaningfulMessage = sessionToUpdate.messages.filter(m => m.sender === 'user').length === 0;
-    const newName = isFirstMeaningfulMessage ? generateSessionName([userMessage]) : sessionToUpdate.name;
-    
-    const updatedMessages = [...sessionToUpdate.messages, userMessage];
-    const updatedSession = { ...sessionToUpdate, messages: updatedMessages, lastActivity: new Date(), name: newName };
-
-    setChatSessions(prevSessions => 
-        prevSessions.map(s => s.id === activeChatSessionId ? updatedSession : s)
-                    .sort((a,b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
-    );
-    setIsLoading(true);
-
-    // Persist user message and update session name if needed
-    await addMessageToSession(activeChatSessionId, userMessage);
-    if (isFirstMeaningfulMessage) {
-        await updateSessionName(activeChatSessionId, newName);
-    }
-
-
-    try {
-      const botResponseText = await getBotResponse(userInput, context, activeChatSessionId);
-      const botMessage: Message = {
-        id: crypto.randomUUID(),
-        text: botResponseText,
-        sender: 'bot',
-        timestamp: new Date(),
-        avatar: true,
-      };
-
-      // Persist bot message
-      await addMessageToSession(activeChatSessionId, botMessage);
-      
-      // Update UI with final state from server
-      const sessions = await getChatSessions();
-      setChatSessions(sessions);
-
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      const errorMessageText = "Sorry, I couldn't connect to the server. Please try again later.";
-      const errorBotMessage: Message = {
-        id: crypto.randomUUID(),
-        text: errorMessageText,
-        sender: 'bot',
-        timestamp: new Date(),
-        avatar: true,
-      };
-      await addMessageToSession(activeChatSessionId, errorBotMessage);
-      const sessions = await getChatSessions();
-      setChatSessions(sessions);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const activeMessages = chatSessions.find(s => s.id === activeChatSessionId)?.messages || [];
-
-  if (isInitialLoading) {
-    return (
-      <div className="flex flex-1 items-center justify-center h-full bg-white">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    );
-  }
-
+export default function LandingPage() {
   return (
-    <>
-      <ChatHistorySidebar
-        sessions={chatSessions}
-        activeSessionId={activeChatSessionId}
-        onLoadSession={handleLoadSession}
-        onNewChat={handleNewChat}
-      />
-      <main className="flex flex-col flex-1 h-full overflow-y-auto bg-white relative">
-        {activeChatSessionId && activeMessages.length > 0 ? (
-           <ChatInterface
-            key={activeChatSessionId}
-            messages={activeMessages}
-            onSendMessageSubmit={handleSendMessage}
-            isLoading={isLoading}
-          />
-        ) : (
-          <div className="flex flex-1 items-center justify-center text-muted-foreground p-4">
-             { !isInitialLoading && <p>Select a chat session or start a new one.</p> }
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <header className="px-4 lg:px-6 h-16 flex items-center shadow-sm">
+        <Link href="#" className="flex items-center justify-center" prefetch={false}>
+          <MessageCircle className="h-6 w-6 text-primary" />
+          <span className="ml-2 text-xl font-bold">MediChat</span>
+        </Link>
+        <nav className="ml-auto flex gap-4 sm:gap-6">
+          <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+            Features
+          </Link>
+          <Link href="#about" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+            About
+          </Link>
+          <Button asChild variant="outline">
+            <Link href="/login">Login</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/signup">Get Started</Link>
+          </Button>
+        </nav>
+      </header>
+      <main className="flex-1">
+        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-white">
+          <div className="container px-4 md:px-6">
+            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
+              <div className="flex flex-col justify-center space-y-4">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none text-primary-dark">
+                    Your Personal AI Medical Assistant
+                  </h1>
+                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
+                    MediChat provides instant, reliable answers to your health questions, symptom analysis, and general medical information.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 min-[400px]:flex-row">
+                  <Button asChild size="lg">
+                     <Link href="/signup">
+                        Start Chatting Now
+                      </Link>
+                  </Button>
+                </div>
+              </div>
+               <img
+                src="https://picsum.photos/seed/med-hero/600/400"
+                width="600"
+                height="400"
+                alt="Hero"
+                className="mx-auto aspect-[3/2] overflow-hidden rounded-xl object-cover"
+                data-ai-hint="medical doctor"
+              />
+            </div>
           </div>
-        )}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handleNewChat}
-                className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary shadow-lg hover:bg-accent"
-                size="icon"
-              >
-                <Plus className="h-7 w-7" />
-                <span className="sr-only">New Chat</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="left" className="bg-foreground text-background">
-              <p>New Chat</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        </section>
+        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-secondary/30">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary">Key Features</div>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Intelligent Medical Guidance</h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  MediChat is designed to be your first stop for medical inquiries, offering a suite of tools to help you understand your health better.
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-3 lg:gap-12">
+              <div className="grid gap-1 text-center">
+                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
+                    <Zap className="h-8 w-8" />
+                 </div>
+                <h3 className="text-xl font-bold">Instant Answers</h3>
+                <p className="text-muted-foreground">Get immediate, AI-powered responses to your general health questions.</p>
+              </div>
+              <div className="grid gap-1 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
+                    <Activity className="h-8 w-8" />
+                 </div>
+                <h3 className="text-xl font-bold">Symptom Analysis</h3>
+                <p className="text-muted-foreground">Describe your symptoms to receive a preliminary risk assessment.
+                </p>
+              </div>
+              <div className="grid gap-1 text-center">
+                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
+                    <ShieldCheck className="h-8 w-8" />
+                 </div>
+                <h3 className="text-xl font-bold">Privacy Focused</h3>
+                <p className="text-muted-foreground">Your conversations are secure and private. We do not store personal health data without consent.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section id="about" className="w-full py-12 md:py-24 lg:py-32 border-t">
+            <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
+                <div className="space-y-3">
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">About MediChat</h2>
+                <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                    MediChat is a prototype application built to demonstrate the power of generative AI in the medical field. It is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
+                </p>
+                </div>
+            </div>
+        </section>
       </main>
-    </>
+      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
+        <p className="text-xs text-muted-foreground">&copy; 2024 MediChat. All rights reserved.</p>
+      </footer>
+    </div>
   );
 }

@@ -13,6 +13,7 @@ export type QuickReply = {
 
 export type ChatSession = {
   id: string;
+  userId: string;
   name: string;
   messages: Message[];
   startTime: Date;

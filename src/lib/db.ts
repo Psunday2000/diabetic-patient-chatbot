@@ -12,11 +12,21 @@ const db = new Database(dbPath, { verbose: console.log });
 if (!dbExists) {
   console.log('Creating database schema...');
   db.exec(`
+    CREATE TABLE users (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      email TEXT UNIQUE
+    );
+  `);
+  
+  db.exec(`
     CREATE TABLE chat_sessions (
       id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
       name TEXT NOT NULL,
       startTime TEXT NOT NULL,
-      lastActivity TEXT NOT NULL
+      lastActivity TEXT NOT NULL,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
     );
   `);
 

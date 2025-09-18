@@ -1,22 +1,20 @@
-
 'use client';
-import type { Metadata } from 'next'; // Metadata can still be used in client components
+
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import AppHeader from '@/components/layout/app-header';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import React from 'react';
-
-// export const metadata: Metadata = { // Cannot export metadata from client component directly. Set in page.tsx or a server component layout if needed.
-//   title: 'MediChat - Your Medical Assistant',
-//   description: 'AI-powered chatbot to help you with your medical questions.',
-// };
+import { usePathname } from 'next/navigation';
+import { AuthProvider } from '@/hooks/use-auth';
+import AppLayout from '@/components/layout/app-layout';
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
+
   return (
     <html lang="en">
       <head>
@@ -27,15 +25,16 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
-        <SidebarProvider defaultOpen={true}>
-          <div className="flex flex-col h-screen">
-            <AppHeader />
-            <main className="flex-1 flex">
+        <AuthProvider>
+          {isAuthPage ? (
+            <>{children}</>
+          ) : (
+            <AppLayout>
               {children}
-            </main>
-          </div>
+            </AppLayout>
+          )}
           <Toaster />
-        </SidebarProvider>
+        </AuthProvider>
       </body>
     </html>
   );

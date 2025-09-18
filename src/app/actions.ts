@@ -5,6 +5,7 @@ import { medicalInformationRetrieval } from '@/ai/flows/medical-information-retr
 import type { QuickReply, ChatSession, Message } from '@/lib/types';
 import db from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { getCurrentUser } from '@/app/auth/actions';
 
 export async function getBotResponse(userInput: string, context: QuickReply['context'], sessionId: string): Promise<string> {
   try {
@@ -24,10 +25,14 @@ export async function getBotResponse(userInput: string, context: QuickReply['con
   }
 }
 
-
 export async function getChatSessions(): Promise<ChatSession[]> {
-  const stmt = db.prepare('SELECT * FROM chat_sessions ORDER BY lastActivity DESC');
-  const sessionsData = stmt.all() as { id: string; name: string; startTime: string; lastActivity: string }[];
+  const user = await getCurrentUser();
+  if (!user) {
+    return [];
+  }
+
+  const stmt = db.prepare('SELECT * FROM chat_sessions WHERE userId = ? ORDER BY lastActivity DESC');
+  const sessionsData = stmt.all(user.uid) as { id: string; userId: string; name: string; startTime: string; lastActivity: string }[];
 
   const sessions = sessionsData.map(session => {
     const messagesStmt = db.prepare('SELECT * FROM messages WHERE sessionId = ? ORDER BY timestamp ASC');
@@ -47,30 +52,77 @@ export async function getChatSessions(): Promise<ChatSession[]> {
   return sessions;
 }
 
-
 export async function createNewChatSession(session: ChatSession): Promise<void> {
-  const insertSession = db.prepare('INSERT INTO chat_sessions (id, name, startTime, lastActivity) VALUES (?, ?, ?, ?)');
-  insertSession.run(session.id, session.name, session.startTime.toISOString(), session.lastActivity.toISOString());
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const insertSession = db.prepare('INSERT INTO chat_sessions (id, userId, name, startTime, lastActivity) VALUES (?, ?, ?, ?, ?)');
+  insertSession.run(session.id, user.uid, session.name, session.startTime.toISOString(), session.lastActivity.toISOString());
 
   const insertMessage = db.prepare('INSERT INTO messages (id, sessionId, text, sender, timestamp, avatar) VALUES (?, ?, ?, ?, ?, ?)');
   for (const message of session.messages) {
     insertMessage.run(message.id, session.id, message.text, message.sender, message.timestamp.toISOString(), message.avatar ? 1 : 0);
   }
-  revalidatePath('/');
+  revalidatePath('/chat');
 }
 
-
 export async function addMessageToSession(sessionId: string, message: Message): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+  
+  // Verify session belongs to the user before adding a message
+  const sessionCheck = db.prepare('SELECT userId FROM chat_sessions WHERE id = ?').get(sessionId) as { userId: string } | undefined;
+  if (sessionCheck?.userId !== user.uid) {
+    throw new Error('Unauthorized to add message to this session');
+  }
+
   const insertMessage = db.prepare('INSERT INTO messages (id, sessionId, text, sender, timestamp, avatar) VALUES (?, ?, ?, ?, ?, ?)');
   insertMessage.run(message.id, sessionId, message.text, message.sender, message.timestamp.toISOString(), message.avatar ? 1 : 0);
 
   const updateSession = db.prepare('UPDATE chat_sessions SET lastActivity = ? WHERE id = ?');
   updateSession.run(new Date().toISOString(), sessionId);
-  revalidatePath('/');
+  revalidatePath('/chat');
 }
 
 export async function updateSessionName(sessionId: string, name: string): Promise<void> {
+    const user = await getCurrentUser();
+    if (!user) {
+        throw new Error('User not authenticated');
+    }
+
+    const sessionCheck = db.prepare('SELECT userId FROM chat_sessions WHERE id = ?').get(sessionId) as { userId: string } | undefined;
+    if (sessionCheck?.userId !== user.uid) {
+      throw new Error('Unauthorized to update this session');
+    }
+
     const update = db.prepare('UPDATE chat_sessions SET name = ? WHERE id = ?');
     update.run(name, sessionId);
-    revalidatePath('/');
+    revalidatePath('/chat');
+}
+
+export async function getProfile() {
+  const user = await getCurrentUser();
+  if (!user) {
+      return null;
+  }
+  const dbUser = db.prepare('SELECT * FROM users WHERE id = ?').get(user.uid) as { id: string; name: string, email: string } | undefined;
+  return dbUser;
+}
+
+export async function updateProfile(name: string) {
+    const user = await getCurrentUser();
+    if (!user) {
+        throw new Error('User not authenticated');
+    }
+    
+    // This would also update firebase auth profile if needed
+    // await updateProfile(auth.currentUser, { displayName: name });
+    
+    const stmt = db.prepare('UPDATE users SET name = ? WHERE id = ?');
+    stmt.run(name, user.uid);
+    revalidatePath('/profile');
 }
