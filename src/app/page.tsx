@@ -1,16 +1,58 @@
 'use client';
-import { Activity, Menu, MessageCircle, ShieldCheck, Zap } from 'lucide-react';
+import { Activity, ArrowUp, Menu, MessageCircle, ShieldCheck, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/layout/mobile-nav';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 export default function LandingPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isScrollToTopVisible, setIsScrollToTopVisible] = useState(false);
+
+  const handleScroll = () => {
+    const currentScrollY = window.scrollY;
+
+    // Show/hide header
+    if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      // Scrolling down
+      setIsHeaderVisible(false);
+    } else {
+      // Scrolling up
+      setIsHeaderVisible(true);
+    }
+    setLastScrollY(currentScrollY);
+    
+    // Show/hide scroll-to-top button
+    if (currentScrollY > 300) {
+      setIsScrollToTopVisible(true);
+    } else {
+      setIsScrollToTopVisible(false);
+    }
+  };
+
+   const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [lastScrollY]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <header className="px-4 lg:px-6 h-16 flex items-center shadow-sm">
+      <header className={cn(
+          "px-4 lg:px-6 h-16 flex items-center shadow-sm fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm transition-transform duration-300 ease-in-out",
+          !isHeaderVisible && "-translate-y-full"
+        )}>
         <Link href="#" className="flex items-center justify-center" prefetch={false}>
           <MessageCircle className="h-6 w-6 text-primary" />
           <span className="ml-2 text-xl font-bold">MediChat</span>
@@ -39,7 +81,7 @@ export default function LandingPage() {
 
        <MobileNav isOpen={isMobileMenuOpen} setIsOpen={setIsMobileMenuOpen} />
 
-      <main className="flex-1">
+      <main className="flex-1 pt-16">
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-white">
           <div className="container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
@@ -122,6 +164,16 @@ export default function LandingPage() {
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
         <p className="text-xs text-muted-foreground">&copy; 2024 MediChat. All rights reserved.</p>
       </footer>
+       {isScrollToTopVisible && (
+        <Button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 h-12 w-12 rounded-full bg-primary shadow-lg hover:bg-accent z-50"
+          size="icon"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="h-6 w-6" />
+        </Button>
+      )}
     </div>
   );
 }

@@ -19,7 +19,7 @@ import { signOut } from '@/app/auth/actions';
 import { useRouter } from 'next/navigation';
 
 export default function AppHeader() {
-  const { toggleSidebar, isMobile } = useSidebar();
+  const { toggleSidebar } = useSidebar();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -32,12 +32,10 @@ export default function AppHeader() {
   return (
     <header className="bg-white text-foreground p-4 shadow-sm sticky top-0 z-50 flex items-center justify-between border-b h-16">
       <div className="flex items-center space-x-3">
-        {isMobile && (
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-foreground hover:bg-background/80">
-            <PanelLeft className="h-6 w-6" />
-            <span className="sr-only">Toggle History</span>
-          </Button>
-        )}
+        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-foreground hover:bg-background/80 md:hidden">
+          <PanelLeft className="h-6 w-6" />
+          <span className="sr-only">Toggle History</span>
+        </Button>
          <Link href="/chat" className="flex items-center space-x-3">
             <MessageCircle className="h-8 w-8 text-primary" />
             <h1 className="text-2xl font-bold hidden sm:block">MediChat</h1>
