@@ -44,17 +44,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, pathname, router]);
 
-  if (loading) {
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
+
+  // While loading, or if we are about to redirect, show a loader.
+  if (loading || (user && isAuthPage) || (!user && !isAuthPage)) {
     return (
       <div className="flex flex-1 h-screen items-center justify-center bg-white">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
-  
-  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
-  if (user && isAuthPage) return null;
-  if (!user && !isAuthPage) return null;
 
   return (
     <AuthContext.Provider value={{ user, loading }}>

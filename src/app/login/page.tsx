@@ -43,9 +43,7 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: "Welcome back!",
       });
-      // The useAuth hook will handle the redirection automatically
-      // This prevents a race condition.
-      router.push('/chat');
+      // The useAuth hook will handle the redirection automatically.
 
     } catch (error: any) {
       toast({
