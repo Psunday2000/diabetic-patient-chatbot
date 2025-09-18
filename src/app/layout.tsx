@@ -8,8 +8,8 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import React from 'react';
 
 // export const metadata: Metadata = { // Cannot export metadata from client component directly. Set in page.tsx or a server component layout if needed.
-//   title: 'DiaChat - Your Diabetes Assistant',
-//   description: 'AI-powered chatbot to help you manage diabetes.',
+//   title: 'MediChat - Your Medical Assistant',
+//   description: 'AI-powered chatbot to help you with your medical questions.',
 // };
 
 export default function RootLayout({
@@ -20,8 +20,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>DiaChat - Your Diabetes Assistant</title>
-        <meta name="description" content="AI-powered chatbot to help you manage diabetes." />
+        <title>MediChat - Your Medical Assistant</title>
+        <meta name="description" content="AI-powered chatbot to help you with your medical questions." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />

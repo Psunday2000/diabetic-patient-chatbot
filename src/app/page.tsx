@@ -8,7 +8,7 @@ import ChatInterface from '@/components/chat/chat-interface';
 import ChatHistorySidebar from '@/components/chat/chat-history-sidebar';
 import { Loader2 } from 'lucide-react';
 
-const initialBotMessageText = "Hi! I'm DiaChat. I'm here to help you with questions about diabetes. How can I assist you today?";
+const initialBotMessageText = "Hi! I'm MediChat. I'm here to help you with your medical questions. How can I assist you today?";
 
 function generateSessionName(messages: Message[]): string {
   const firstUserMessage = messages.find(m => m.sender === 'user');

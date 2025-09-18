@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/diabetes-symptom-analysis.ts';
-import '@/ai/flows/diabetes-information-retrieval.ts';
+import '@/ai/flows/symptom-analysis.ts';
+import '@/ai/flows/medical-information-retrieval.ts';

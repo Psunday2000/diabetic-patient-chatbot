@@ -1,16 +1,16 @@
 'use server';
 
-import { analyzeSymptoms } from '@/ai/flows/diabetes-symptom-analysis';
-import { diabetesInformationRetrieval } from '@/ai/flows/diabetes-information-retrieval';
+import { analyzeSymptoms } from '@/ai/flows/symptom-analysis';
+import { medicalInformationRetrieval } from '@/ai/flows/medical-information-retrieval';
 import type { QuickReply } from '@/lib/types';
 
 export async function getBotResponse(userInput: string, context: QuickReply['context']): Promise<string> {
   try {
     if (context === 'symptoms') {
       const response = await analyzeSymptoms({ symptomsDescription: userInput });
-      return response.diabetesRiskAssessment;
+      return response.riskAssessment;
     } else {
-      const response = await diabetesInformationRetrieval({ query: userInput });
+      const response = await medicalInformationRetrieval({ query: userInput });
       return response.answer;
     }
   } catch (error) {

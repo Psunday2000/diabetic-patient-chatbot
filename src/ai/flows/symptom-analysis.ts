@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview Analyzes user-described symptoms to assess potential diabetes risk.
+ * @fileOverview Analyzes user-described symptoms to assess potential health risks.
  *
- * - analyzeSymptoms - Analyzes symptoms to determine diabetes risk.
+ * - analyzeSymptoms - Analyzes symptoms to determine potential health risks.
  * - AnalyzeSymptomsInput - Input for the analyzeSymptoms function.
  * - AnalyzeSymptomsOutput - Output for the analyzeSymptoms function.
  */
@@ -19,10 +19,10 @@ const AnalyzeSymptomsInputSchema = z.object({
 export type AnalyzeSymptomsInput = z.infer<typeof AnalyzeSymptomsInputSchema>;
 
 const AnalyzeSymptomsOutputSchema = z.object({
-  diabetesRiskAssessment: z
+  riskAssessment: z
     .string()
     .describe(
-      'An assessment of whether the described symptoms indicate a potential risk of diabetes, along with recommendations.'
+      'An assessment of whether the described symptoms indicate a potential health risk, along with recommendations.'
     ),
 });
 
@@ -35,10 +35,10 @@ export async function analyzeSymptoms(
 }
 
 const prompt = ai.definePrompt({
-  name: 'diabetesSymptomAnalysisPrompt',
+  name: 'symptomAnalysisPrompt',
   input: {schema: AnalyzeSymptomsInputSchema},
   output: {schema: AnalyzeSymptomsOutputSchema},
-  prompt: `You are a medical assistant specializing in diabetes. A patient will describe their symptoms to you, and you will use that information to provide a preliminary assessment of whether their symptoms could be related to diabetes. You will make a determination as to the likelihood of the symptoms being related to diabetes, and provide recommendations for next steps, such as consulting a healthcare professional.  Do not provide a diagnosis, only provide a risk assessment based on the symptoms provided.
+  prompt: `You are a medical assistant. A patient will describe their symptoms to you, and you will use that information to provide a preliminary assessment of whether their symptoms could be related to a health issue. You will provide recommendations for next steps, such as consulting a healthcare professional. Do not provide a diagnosis, only a risk assessment based on the symptoms provided.
 
 Symptoms: {{{symptomsDescription}}}`,
 });
@@ -51,6 +51,6 @@ const analyzeSymptomsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    return { riskAssessment: output!.riskAssessment };
   }
 );

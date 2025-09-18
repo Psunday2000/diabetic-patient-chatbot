@@ -10,8 +10,8 @@ import React, { useState, useRef, useEffect, FormEvent } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 
 const quickRepliesOptions: QuickReply[] = [
-  { text: "Symptoms", context: 'symptoms' },
-  { text: "Diet Tips", context: 'general_info' },
+  { text: "Check Symptoms", context: 'symptoms' },
+  { text: "Health Questions", context: 'general_info' },
   { text: "Medication Info", context: 'general_info' },
 ];
 
@@ -72,7 +72,7 @@ export default function ChatInterface({ messages, onSendMessageSubmit, isLoading
                   </div>
               </div>
               <div className="ml-3">
-                  <h2 className="text-sm font-medium text-foreground">DiaBot</h2>
+                  <h2 className="text-sm font-medium text-foreground">MediBot</h2>
                   <p className="text-xs text-foreground/60">Online</p>
               </div>
           </div>
@@ -92,7 +92,7 @@ export default function ChatInterface({ messages, onSendMessageSubmit, isLoading
                 </div>
                 <div className="p-3 rounded-xl shadow-sm bg-muted text-muted-foreground rounded-bl-none">
                   <div className="flex items-center justify-center">
-                    <span className="text-sm text-muted-foreground/80">DiaBot is typing</span>
+                    <span className="text-sm text-muted-foreground/80">MediBot is typing</span>
                     <span className="w-2 h-2 ml-2 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:-0.3s]"></span>
                     <span className="w-2 h-2 ml-1 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:-0.15s]"></span>
                     <span className="w-2 h-2 ml-1 rounded-full bg-muted-foreground/50 animate-bounce"></span>
