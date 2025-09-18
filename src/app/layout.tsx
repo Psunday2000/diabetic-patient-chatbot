@@ -1,3 +1,4 @@
+
 'use client';
 import type { Metadata } from 'next'; // Metadata can still be used in client components
 import './globals.css';
@@ -29,7 +30,7 @@ export default function RootLayout({
         <SidebarProvider defaultOpen={true}>
           <div className="flex flex-col h-screen">
             <AppHeader />
-            <main className="flex-1 flex flex-row overflow-hidden">
+            <main className="flex-1 flex">
               {children}
             </main>
           </div>

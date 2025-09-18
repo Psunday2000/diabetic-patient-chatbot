@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -191,7 +192,7 @@ export default function HomePage() {
         onLoadSession={handleLoadSession}
         onNewChat={handleNewChat}
       />
-      <div className="flex flex-col flex-1 h-full overflow-y-auto bg-white">
+      <main className="flex flex-col flex-1 h-full overflow-y-auto bg-white">
         {activeChatSessionId && activeMessages.length > 0 ? (
            <ChatInterface
             key={activeChatSessionId}
@@ -204,7 +205,7 @@ export default function HomePage() {
             <p>Select a chat session or start a new one.</p>
           </div>
         )}
-      </div>
+      </main>
     </>
   );
 }
