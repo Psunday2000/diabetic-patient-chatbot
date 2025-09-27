@@ -24,21 +24,10 @@ function useFirebaseAuth() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
-
-      const isAuthPage = pathname === '/login' || pathname === '/signup';
-      const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
-
-      if (currentUser) {
-        // If user is logged in and on an auth page, redirect to chat
-        if (isAuthPage) {
-          router.replace('/chat');
-        }
-      } else {
-        // If user is not logged in and on a protected app page, redirect to login
-        if (isAppPage) {
-          router.replace('/login');
-        }
-      }
+      // Intentionally do NOT perform navigation here. Navigation decisions
+      // are handled by higher-level effects (AuthProvider) or the pages
+      // themselves to avoid racing with server-side middleware and cookie
+      // propagation. This listener only updates auth state.
     });
 
     // Cleanup subscription on unmount
@@ -52,36 +41,9 @@ function useFirebaseAuth() {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { user, loading } = useFirebaseAuth();
-  const pathname = usePathname();
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
-  const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
-  
-  if (loading) {
-    return (
-      <div className="flex flex-1 h-screen items-center justify-center bg-white">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    );
-  }
 
-  // While loading is false, we might still be redirecting.
-  // This prevents a flicker of the old page before the redirect happens.
-  if (!user && isAppPage) {
-      return (
-          <div className="flex flex-1 h-screen items-center justify-center bg-white">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          </div>
-      );
-  }
-
-  if (user && isAuthPage) {
-      return (
-          <div className="flex flex-1 h-screen items-center justify-center bg-white">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          </div>
-      );
-  }
-
+  // No redirect logic - let server-side middleware handle all navigation
+  // Just provide auth state to components
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}

@@ -1,50 +1,45 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as AvatarPrimitive from "@radix-ui/react-avatar"
+import React, { useEffect, useState } from 'react';
 
-import { cn } from "@/lib/utils"
+type AvatarProps = {
+  src?: string | null;
+  name?: string | null;
+  size?: number;
+  alt?: string;
+  className?: string;
+};
 
-const Avatar = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Root
-    ref={ref}
-    className={cn(
-      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
-      className
-    )}
-    {...props}
-  />
-))
-Avatar.displayName = AvatarPrimitive.Root.displayName
+export default function Avatar({ src, name, size = 40, alt = 'avatar', className = '' }: AvatarProps) {
+  const [key, setKey] = useState<number>(0);
 
-const AvatarImage = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Image>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props}
-  />
-))
-AvatarImage.displayName = AvatarPrimitive.Image.displayName
+  useEffect(() => {
+    try { setKey(Number(localStorage.getItem('avatarKey')) || 0); } catch { setKey(0); }
+    function onStorage(e: StorageEvent) {
+      if (e.key === 'avatarKey') setKey(Number(e.newValue || 0));
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
-const AvatarFallback = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Fallback>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Fallback
-    ref={ref}
-    className={cn(
-      "flex h-full w-full items-center justify-center rounded-full bg-muted",
-      className
-    )}
-    {...props}
-  />
-))
-AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
+  const initials = (() => {
+    const display = name || '';
+    const parts = display.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  })();
 
-export { Avatar, AvatarImage, AvatarFallback }
+  const url = src ? src + (key ? `?v=${key}` : '') : null;
+
+  if (!url) {
+    return (
+      <div className={`${className} rounded-full bg-secondary flex items-center justify-center text-sm font-medium text-secondary-foreground w-full h-full`}>{initials || null}</div>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt={alt} className={`${className} rounded-full object-cover w-full h-full block`} />
+  );
+}

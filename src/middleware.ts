@@ -4,28 +4,32 @@ import { NextResponse, type NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('session');
   const { pathname } = request.nextUrl;
+  const hasSession = !!sessionCookie;
 
-  // If trying to access protected routes without a session, redirect to login
-  if (['/chat', '/profile'].some(path => pathname.startsWith(path))) {
-    if (!sessionCookie) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/login';
-      return NextResponse.redirect(url);
-    }
+  // If logged in and on auth pages, redirect to chat (Laravel-style RedirectIfAuthenticated)
+  if (hasSession && (pathname === '/login' || pathname === '/signup')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/chat';
+    return NextResponse.redirect(url);
   }
 
-  // If there is a session and user tries to access the root page, redirect to chat
-  if (pathname === '/') {
-    if (sessionCookie) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/chat';
-      return NextResponse.redirect(url);
-    }
+  // If not logged in and on protected routes, redirect to login
+  if (!hasSession && ['/chat', '/profile'].some(path => pathname.startsWith(path))) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
+  // Allow all other routes (including root page for both logged-in and logged-out users)
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/',
+    '/login',
+    '/signup', 
+    '/chat/:path*',
+    '/profile/:path*'
+  ],
 };

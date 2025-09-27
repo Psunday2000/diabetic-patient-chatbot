@@ -4,19 +4,15 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import React from 'react';
 import { AuthProvider } from '@/hooks/use-auth';
-import AppLayout from '@/components/layout/app-layout';
-import { usePathname } from 'next/navigation';
+import AuthAwareLayout from '@/components/layout/auth-aware-layout';
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-  const isAppPage = pathname.startsWith('/chat') || pathname.startsWith('/profile');
-
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <title>MediChat - Your Medical Assistant</title>
         <meta name="description" content="AI-powered chatbot to help you with your medical questions." />
@@ -26,13 +22,9 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
         <AuthProvider>
-            {isAppPage ? (
-              <AppLayout>
-                {children}
-              </AppLayout>
-            ) : (
-              <>{children}</>
-            )}
+          <AuthAwareLayout>
+            {children}
+          </AuthAwareLayout>
           <Toaster />
         </AuthProvider>
       </body>

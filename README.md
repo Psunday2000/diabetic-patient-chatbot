@@ -76,3 +76,7 @@ Follow these instructions to get a copy of the project up and running on your lo
 - `npm run build`: Creates a production build of the application.
 - `npm run start`: Starts the production server.
 - `npm run lint`: Lints the codebase for errors.
+
+## Local Avatar Uploads
+
+This project includes a local avatar upload endpoint (`/api/avatar`) that stores resized avatars in `public/uploads/avatars/{uid}.jpg`. This is intended for development and testing so you don't need Firebase Storage billing to allow users to upload profile images. For production, you should replace this with a proper object storage solution (Firebase Storage, S3, etc.) and secure the uploads.

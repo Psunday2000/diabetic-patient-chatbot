@@ -2,6 +2,7 @@
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import Link from 'next/link';
+import Logo from '@/components/ui/logo';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 
@@ -13,23 +14,20 @@ interface MobileNavProps {
 export function MobileNav({ isOpen, setIsOpen }: MobileNavProps) {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetContent side="left">
+      <SheetContent side="left" className="bg-background text-foreground">
         <SheetHeader>
-          <SheetTitle className="text-xl font-bold">MediChat</SheetTitle>
+          <div className="flex items-center space-x-3">
+            <Link href="/" className="inline-flex items-center">
+              <Logo size={28} className="h-7 w-7" alt="MediChat" />
+            </Link>
+            <SheetTitle className="text-xl font-bold">MediChat</SheetTitle>
+          </div>
         </SheetHeader>
         <nav className="flex flex-col space-y-4 mt-8">
-          <Link
-            href="#features"
-            className="text-lg font-medium text-foreground hover:text-primary"
-            onClick={() => setIsOpen(false)}
-          >
+          <Link href="#features" className="text-lg font-medium text-foreground hover:text-primary" onClick={() => setIsOpen(false)}>
             Features
           </Link>
-          <Link
-            href="#about"
-            className="text-lg font-medium text-foreground hover:text-primary"
-            onClick={() => setIsOpen(false)}
-          >
+          <Link href="#about" className="text-lg font-medium text-foreground hover:text-primary" onClick={() => setIsOpen(false)}>
             About
           </Link>
         </nav>

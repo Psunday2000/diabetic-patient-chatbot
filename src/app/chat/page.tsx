@@ -3,17 +3,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Message, QuickReply, ChatSession } from '@/lib/types';
-import { getBotResponse, getChatSessions, createNewChatSession, addMessageToSession, updateSessionName } from '@/app/actions';
+import { getBotResponse, getChatSessions, createNewChatSession, addMessageToSession, updateSessionName, deleteChatSession } from '@/app/actions';
 import ChatInterface from '@/components/chat/chat-interface';
 import ChatHistorySidebar from '@/components/chat/chat-history-sidebar';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 
 
 const initialBotMessageText = "Hi! I'm MediChat. I'm here to help you with your medical questions. How can I assist you today?";
@@ -64,6 +58,10 @@ export default function ChatPage() {
     await createNewSession();
   }, [createNewSession]);
 
+  const handleStartNewChat = useCallback(async () => {
+    await createNewSession();
+  }, [createNewSession]);
+
   useEffect(() => {
     async function loadInitialData() {
       setIsInitialLoading(true);
@@ -78,11 +76,12 @@ export default function ChatPage() {
             setActiveChatSessionId(sessions[0].id);
           }
         } else {
-          await createNewSession();
+          // No sessions exist - show empty state, don't auto-create
+          setChatSessions([]);
         }
       } catch (error) {
         console.error("Error loading sessions:", error);
-        await createNewSession();
+        setChatSessions([]);
       } finally {
         setIsInitialLoading(false);
       }
@@ -100,6 +99,25 @@ export default function ChatPage() {
 
   const handleLoadSession = (sessionId: string) => {
     setActiveChatSessionId(sessionId);
+  };
+
+  const handleDeleteSession = async (sessionId: string) => {
+    try {
+      await deleteChatSession(sessionId);
+      
+      // If the deleted session was active, clear the active session
+      if (activeChatSessionId === sessionId) {
+        setActiveChatSessionId(null);
+      }
+      
+      // Reload sessions to update the sidebar
+      const sessions = await getChatSessions();
+      setChatSessions(sessions);
+      
+      // Don't auto-create a new session - let user decide when to start a new chat
+    } catch (error) {
+      console.error('Failed to delete session:', error);
+    }
   };
 
   const handleSendMessage = async (userInput: string, context: QuickReply['context']) => {
@@ -180,7 +198,7 @@ export default function ChatPage() {
 
   if (isInitialLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center h-full bg-white">
+      <div className="flex flex-1 items-center justify-center h-full bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
@@ -193,8 +211,9 @@ export default function ChatPage() {
         activeSessionId={activeChatSessionId}
         onLoadSession={handleLoadSession}
         onNewChat={handleNewChat}
+        onDeleteSession={handleDeleteSession}
       />
-      <main className="flex flex-col flex-1 h-full overflow-y-auto bg-white relative">
+      <div className="flex flex-col flex-1 h-full bg-background relative min-w-0">
         {activeChatSessionId && activeMessages.length > 0 ? (
            <ChatInterface
             key={activeChatSessionId}
@@ -203,28 +222,23 @@ export default function ChatPage() {
             isLoading={isLoading}
           />
         ) : (
-          <div className="flex flex-1 items-center justify-center text-muted-foreground p-4">
-             { !isInitialLoading && <p>Select a chat session or start a new one.</p> }
+          <div className="flex flex-1 items-center justify-center p-4">
+            {!isInitialLoading && (
+              <div className="text-center space-y-6 max-w-md">
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-semibold text-foreground">Welcome to MediChat</h2>
+                  <p className="text-muted-foreground">
+                    Start a new conversation with your AI medical assistant
+                  </p>
+                </div>
+                <Button onClick={handleStartNewChat} size="lg" className="px-8">
+                  Start New Chat
+                </Button>
+              </div>
+            )}
           </div>
         )}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handleNewChat}
-                className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary shadow-lg hover:bg-accent"
-                size="icon"
-              >
-                <Plus className="h-7 w-7" />
-                <span className="sr-only">New Chat</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="left" className="bg-foreground text-background">
-              <p>New Chat</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </main>
+      </div>
     </>
   );
 }

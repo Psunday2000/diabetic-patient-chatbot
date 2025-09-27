@@ -16,7 +16,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import { MessageCircle, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import Logo from '@/components/ui/logo';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -53,7 +54,15 @@ export default function SignupPage() {
         description: "Welcome to MediChat!",
       });
 
-      router.push('/chat');
+      // Navigate to /chat after a short delay to ensure session cookie is set
+      setTimeout(() => {
+        try {
+          window.location.href = '/chat';
+        } catch (error) {
+          // Fallback: try router.push
+          router.push('/chat');
+        }
+      }, 100);
 
     } catch (error: any) {
        toast({
@@ -61,6 +70,7 @@ export default function SignupPage() {
         description: error.message,
         variant: 'destructive',
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -70,7 +80,9 @@ export default function SignupPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex items-center justify-center">
-            <MessageCircle className="h-10 w-10 text-primary" />
+            <Link href="/" className="inline-flex items-center">
+              <Logo size={40} className="h-10 w-10 text-primary" alt="MediChat" />
+            </Link>
           </div>
           <CardTitle className="text-3xl font-bold">Create an Account</CardTitle>
           <CardDescription>

@@ -4,95 +4,127 @@
 
 @layer base {
   :root {
-    --background: 195 75% 94%; /* #caf0f8 */
-    --foreground: 221 95% 19%; /* #03045e */
+    /* Prefer dark theme, but keep light tokens available */
+    --background: 0 0% 100%; /* white */
+    --foreground: 222 8% 8%; /* near-black text */
 
-    --card: 195 75% 94%;
-    --card-foreground: 221 95% 19%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 8% 8%;
 
-    --popover: 195 75% 94%;
-    --popover-foreground: 221 95% 19%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 8% 8%;
 
-    --primary: 197 100% 43%; /* #00b4d8 */
+    /* Palette provided by user (converted to HSL) */
+    --primary: 28 100% 57%; /* #FF8822 - orange */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 200 82% 87%; /* #90e0ef */
-    --secondary-foreground: 221 95% 19%;
+    --secondary: 5 92% 65%; /* #F86254 - warm red */
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 100%; /* white */
-    --muted-foreground: 222 47% 11%;
+    --muted-foreground: 222 15% 12%;
 
-    --accent: 206 100% 36%; /* #0077b6 */
+    --accent: 308 53% 54%; /* #C84DB8 - magenta/purple */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 344 54% 56%; /* #CC5374 - pink/mauve */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 200 82% 80%; /* Lighter version of secondary */
+    --border: 0 0% 90%;
     --input: 0 0% 100%;
-    --ring: 197 100% 43%;
+    --ring: 28 100% 57%;
 
     --radius: 0.75rem;
 
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 28 100% 57%;
+    --chart-2: 308 53% 54%;
+    --chart-3: 5 92% 65%;
+    --chart-4: 344 54% 56%;
+    --chart-5: 330 60% 55%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 200 82% 87%;
-    --sidebar-accent-foreground: 221 95% 19%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 206 100% 36%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 8% 8%;
+    --sidebar-primary: 222 8% 8%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 308 53% 54%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 95%;
+    --sidebar-ring: 308 53% 54%;
+    --overlay: 0 0 0; /* default black (rgb) for overlays */
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 195 75% 94%;
-    --card: 222 47% 11%;
-    --card-foreground: 195 75% 94%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 195 75% 94%;
-    --primary: 197 100% 43%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 206 100% 36%;
+    /* Dark theme defaults (preferred) */
+    --background: 220 8% 6%; /* near-black */
+    --foreground: 0 0% 100%; /* white text */
+    --card: 220 8% 6%;
+    --card-foreground: 0 0% 100%;
+    --popover: 220 8% 6%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 28 100% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 5 92% 60%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 222 47% 15%;
-    --muted-foreground: 195 75% 94%;
-    --accent: 200 82% 87%;
-    --accent-foreground: 221 95% 19%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 195 75% 94%;
-    --border: 222 47% 20%;
-    --input: 222 47% 15%;
-    --ring: 197 100% 43%;
+    --muted: 220 8% 12%;
+    --muted-foreground: 0 0% 100%;
+    --accent: 308 53% 54%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 344 54% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 8% 14%;
+    --input: 220 8% 12%;
+    --ring: 28 100% 57%;
     
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-1: 28 100% 57%;
+    --chart-2: 308 53% 54%;
+    --chart-3: 5 92% 65%;
+    --chart-4: 344 54% 56%;
+    --chart-5: 330 60% 55%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 220 8% 6%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 308 53% 54%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 8% 14%;
+    --sidebar-ring: 308 53% 54%;
+    --overlay: 0 0 0; /* keep black for overlays in dark as well for stronger contrast */
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  /* Reset and sensible defaults */
+  *, *::before, *::after {
+    box-sizing: border-box;
   }
+
+  html, body, #__next {
+    height: 100%;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Utilities inspired by modern chat layouts (Gemini-like):
+     - .container centers content and constrains max width
+     - .chat-column is a full-height, flexible chat column for main content
+  */
+  .container {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    max-width: 1100px;
+    width: 100%;
+  }
+
+  .chat-column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    max-width: 100%;
   }
 }

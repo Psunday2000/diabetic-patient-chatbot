@@ -104,6 +104,28 @@ export async function updateSessionName(sessionId: string, name: string): Promis
     revalidatePath('/chat');
 }
 
+export async function deleteChatSession(sessionId: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const sessionCheck = db.prepare('SELECT userId FROM chat_sessions WHERE id = ?').get(sessionId) as { userId: string } | undefined;
+  if (sessionCheck?.userId !== user.uid) {
+    throw new Error('Unauthorized to delete this session');
+  }
+
+  // Delete all messages for this session first
+  const deleteMessages = db.prepare('DELETE FROM messages WHERE sessionId = ?');
+  deleteMessages.run(sessionId);
+
+  // Delete the session
+  const deleteSession = db.prepare('DELETE FROM chat_sessions WHERE id = ?');
+  deleteSession.run(sessionId);
+
+  revalidatePath('/chat');
+}
+
 export async function getProfile() {
   const user = await getCurrentUser();
   if (!user) {
